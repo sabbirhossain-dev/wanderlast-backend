@@ -2,6 +2,7 @@ import express from "express";
 import "dotenv/config";
 import { MongoClient, ObjectId } from "mongodb";
 import cors from "cors";
+import { createRemoteJWKSet, jwtVerify } from "jose";
 
 const app = express();
 const PORT = 5000;
@@ -26,12 +27,28 @@ const databaseConnect = await connectToDatabase();
 const db = databaseConnect.db("WanderlastDB");
 const destinationCollection = db.collection("destinationCollection");
 
+//verify api
+
+const verifyApi = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader.split(" ")[1];
+  console.log(token);
+
+  const JWKS = createRemoteJWKSet(
+    new URL("http://localhost:3000/api/auth/jwks"),
+  );
+  const { payload } = await jwtVerify(token, JWKS);
+  console.log(payload);
+  next();
+};
+
+//home route
 app.get("/", (req, res) => {
   res.send("Hello, World!");
 });
 
 //destinations post
-app.post("/destinations", async (req, res) => {
+app.post("/destinations", verifyApi, async (req, res) => {
   const destinationsData = req.body;
   const result = await destinationCollection.insertOne(destinationsData);
   console.log("inserted");
@@ -53,7 +70,7 @@ app.get("/destination/:id", async (req, res) => {
 });
 
 //edit or patch
-app.patch("/destination/:id", async (req, res) => {
+app.patch("/destination/:id", verifyApi, async (req, res) => {
   const { id } = req.params;
   const updatedData = req.body;
 
