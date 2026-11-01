@@ -32,13 +32,13 @@ const destinationCollection = db.collection("destinationCollection");
 const verifyApi = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   const token = authHeader.split(" ")[1];
-  console.log(token);
+  // console.log(token);
 
   const JWKS = createRemoteJWKSet(
     new URL(`${process.env.FRONTEND_URL}/api/auth/jwks`),
   );
   const { payload } = await jwtVerify(token, JWKS);
-  console.log(payload);
+  // console.log(payload);
   next();
 };
 
